@@ -7,8 +7,18 @@ const session = require('express-session');
 const bodyParser = require('body-parser');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000; // ✅ Fixed for Render
 const DATA_FILE = path.join(__dirname, 'data', 'messages.json');
+
+// ✅ Auto-create data folder and messages.json if they don't exist
+if (!fs.existsSync(path.join(__dirname, 'data'))) {
+  fs.mkdirSync(path.join(__dirname, 'data'));
+  console.log('✅ Created data folder');
+}
+if (!fs.existsSync(DATA_FILE)) {
+  fs.writeFileSync(DATA_FILE, '[]');
+  console.log('✅ Created messages.json');
+}
 
 // ─── Middleware ───────────────────────────────────────────
 app.use(bodyParser.json());
@@ -37,7 +47,6 @@ function requireLogin(req, res, next) {
 }
 
 // ─── Email Transporter (Gmail) ────────────────────────────
-// Replace with your Gmail & App Password
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
