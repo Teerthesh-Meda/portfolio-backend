@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard — Teerthesh</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080c10; --surface: #0f1520; --surface2: #161e2e;
+      --accent: #00c8ff; --accent2: #0077ff;
+      --text: #e8edf5; --muted: #7a8899; --border: rgba(0,200,255,0.12);
+      --danger: #ff4757; --success: #2ed573;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+    /* SIDEBAR */
+    .sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0; width: 240px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      padding: 2rem 1.5rem; z-index: 50;
+    }
+    .logo {
+      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.3rem;
+      color: var(--accent); margin-bottom: 0.3rem;
+    }
+    .logo span { color: var(--text); }
+    .logo-sub { color: var(--muted); font-size: 0.75rem; margin-bottom: 2.5rem; }
+    .nav-item {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.7rem 1rem; border-radius: 10px;
+      color: var(--muted); font-size: 0.9rem;
+      cursor: pointer; transition: all 0.2s; margin-bottom: 0.3rem;
+      text-decoration: none;
+    }
+    .nav-item:hover, .nav-item.active { background: rgba(0,200,255,0.08); color: var(--accent); }
+    .nav-icon { font-size: 1.1rem; width: 20px; text-align: center; }
+    .sidebar-footer { margin-top: auto; }
+    .logout-btn {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.7rem 1rem; border-radius: 10px;
+      color: var(--danger); font-size: 0.9rem;
+      cursor: pointer; transition: all 0.2s; text-decoration: none;
+      border: 1px solid rgba(255,71,87,0.2);
+    }
+    .logout-btn:hover { background: rgba(255,71,87,0.08); }
+
+    /* MAIN */
+    .main { margin-left: 240px; padding: 2.5rem; }
+    .page-header { margin-bottom: 2.5rem; }
+    .page-header h1 { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; }
+    .page-header p { color: var(--muted); font-size: 0.9rem; margin-top: 0.3rem; }
+
+    /* STATS */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem; margin-bottom: 2.5rem; }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 1.5rem;
+      position: relative; overflow: hidden;
+    }
+    .stat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+    }
+    .stat-icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
+    .stat-value { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; color: var(--accent); }
+    .stat-label { color: var(--muted); font-size: 0.8rem; margin-top: 0.2rem; }
+
+    /* MESSAGES */
+    .section-title {
+      font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700;
+      margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.75rem;
+    }
+    .badge {
+      background: rgba(0,200,255,0.1); border: 1px solid var(--border);
+      color: var(--accent); border-radius: 100px;
+      padding: 0.2rem 0.65rem; font-size: 0.75rem; font-weight: 500;
+    }
+    .badge.danger { background: rgba(255,71,87,0.1); border-color: rgba(255,71,87,0.3); color: var(--danger); }
+
+    /* FILTERS */
+    .filters { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center; }
+    .filter-btn {
+      padding: 0.4rem 1rem; border-radius: 100px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--muted); font-size: 0.82rem; cursor: pointer;
+      transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+    }
+    .filter-btn:hover, .filter-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,200,255,0.08); }
+    .search-input {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 100px; padding: 0.4rem 1rem;
+      color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.82rem;
+      outline: none; width: 220px;
+    }
+    .search-input:focus { border-color: var(--accent); }
+
+    /* MESSAGE TABLE */
+    .messages-container {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+    }
+    .msg-row {
+      padding: 1.2rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: grid; grid-template-columns: 3fr 2fr 2fr 1fr auto;
+      align-items: center; gap: 1rem;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .msg-row:last-child { border-bottom: none; }
+    .msg-row:hover { background: rgba(0,200,255,0.04); }
+    .msg-row.unread { border-left: 3px solid var(--accent); }
+    .msg-name { font-weight: 500; display: flex; align-items: center; gap: 0.5rem; }
+    .unread-dot { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; flex-shrink: 0; }
+    .msg-email { color: var(--muted); font-size: 0.85rem; }
+    .msg-subject { color: var(--muted); font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .msg-date { color: var(--muted); font-size: 0.78rem; white-space: nowrap; }
+    .msg-actions { display: flex; gap: 0.5rem; }
+    .btn-icon {
+      width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; transition: all 0.2s;
+    }
+    .btn-icon:hover { border-color: var(--danger); color: var(--danger); background: rgba(255,71,87,0.08); }
+    .btn-icon.read:hover { border-color: var(--success); color: var(--success); background: rgba(46,213,115,0.08); }
+    .empty-state {
+      text-align: center; padding: 4rem 2rem;
+      color: var(--muted); font-size: 1rem;
+    }
+    .empty-state .icon { font-size: 2.5rem; margin-bottom: 1rem; }
+    .table-header {
+      padding: 0.8rem 1.5rem;
+      display: grid; grid-template-columns: 3fr 2fr 2fr 1fr auto;
+      gap: 1rem; background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+    }
+    .th { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px); z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 560px;
+      position: relative; transform: scale(0.95); transition: transform 0.2s;
+    }
+    .modal-overlay.open .modal { transform: scale(1); }
+    .modal::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--accent2), var(--accent)); border-radius: 20px 20px 0 0;
+    }
+    .modal-close {
+      position: absolute; top: 1.2rem; right: 1.2rem;
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--muted); cursor: pointer; font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal h2 { font-family: 'Syne', sans-serif; font-size: 1.3rem; margin-bottom: 1.5rem; }
+    .modal-meta { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.5rem; }
+    .modal-meta-row { display: flex; gap: 0.75rem; font-size: 0.88rem; }
+    .meta-label { color: var(--muted); width: 70px; flex-shrink: 0; }
+    .meta-value { color: var(--text); }
+    .modal-message {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.2rem;
+      font-size: 0.92rem; line-height: 1.7; color: var(--text);
+      white-space: pre-wrap;
+    }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; }
+    .btn-modal {
+      padding: 0.6rem 1.3rem; border-radius: 8px; font-size: 0.88rem;
+      cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+    }
+    .btn-delete { background: rgba(255,71,87,0.1); border: 1px solid rgba(255,71,87,0.3); color: var(--danger); }
+    .btn-delete:hover { background: rgba(255,71,87,0.2); }
+    .btn-close-modal { background: var(--surface2); border: 1px solid var(--border); color: var(--text); }
+    .btn-close-modal:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 2rem; right: 2rem;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1rem 1.5rem;
+      font-size: 0.9rem; z-index: 300;
+      transform: translateY(100px); opacity: 0;
+      transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: rgba(46,213,115,0.4); color: var(--success); }
+    .toast.error { border-color: rgba(255,71,87,0.4); color: var(--danger); }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 1.5rem; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .msg-row, .table-header { grid-template-columns: 1fr auto; }
+      .msg-email, .msg-subject, .msg-date { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">T<span>eerthesh</span></div>
+    <div class="logo-sub">Portfolio Admin</div>
+    <a class="nav-item active" href="/admin">
+      <span class="nav-icon">📬</span> Messages
+    </a>
+    <a class="nav-item" href="/" target="_blank">
+      <span class="nav-icon">🌐</span> View Portfolio
+    </a>
+    <div class="sidebar-footer">
+      <a class="logout-btn" href="/admin/logout">
+        <span>🚪</span> Logout
+      </a>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="page-header">
+      <h1>Dashboard</h1>
+      <p id="dateStr"></p>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">📬</div>
+        <div class="stat-value" id="statTotal">0</div>
+        <div class="stat-label">Total Messages</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔵</div>
+        <div class="stat-value" id="statUnread">0</div>
+        <div class="stat-label">Unread</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-value" id="statRead">0</div>
+        <div class="stat-label">Read</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📅</div>
+        <div class="stat-value" id="statToday">0</div>
+        <div class="stat-label">Today</div>
+      </div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="section-title">
+      Messages <span class="badge danger" id="unreadBadge">0 unread</span>
+    </div>
+
+    <div class="filters">
+      <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+      <button class="filter-btn" onclick="setFilter('unread', this)">Unread</button>
+      <button class="filter-btn" onclick="setFilter('read', this)">Read</button>
+      <input class="search-input" type="text" placeholder="🔍  Search messages..." oninput="renderMessages()" id="searchInput"/>
+    </div>
+
+    <div class="messages-container">
+      <div class="table-header">
+        <span class="th">From</span>
+        <span class="th">Email</span>
+        <span class="th">Subject</span>
+        <span class="th">Date</span>
+        <span class="th">Actions</span>
+      </div>
+      <div id="messagesList"></div>
+    </div>
+  </div>
+
+  <!-- MESSAGE MODAL -->
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <h2 id="modalSubject"></h2>
+      <div class="modal-meta">
+        <div class="modal-meta-row"><span class="meta-label">From</span><span class="meta-value" id="modalName"></span></div>
+        <div class="modal-meta-row"><span class="meta-label">Email</span><span class="meta-value" id="modalEmail"></span></div>
+        <div class="modal-meta-row"><span class="meta-label">Date</span><span class="meta-value" id="modalDate"></span></div>
+      </div>
+      <div class="modal-message" id="modalMessage"></div>
+      <div class="modal-footer">
+        <button class="btn-modal btn-delete" onclick="deleteFromModal()">🗑 Delete</button>
+        <button class="btn-modal btn-close-modal" onclick="closeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    let allMessages = [];
+    let currentFilter = 'all';
+    let currentModalId = null;
+
+    // Date
+    document.getElementById('dateStr').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Load messages
+    async function loadMessages() {
+      try {
+        const res = await fetch('/api/messages');
+        allMessages = await res.json();
+        updateStats();
+        renderMessages();
+      } catch(e) { showToast('Failed to load messages', 'error'); }
+    }
+
+    function updateStats() {
+      const unread = allMessages.filter(m => !m.read).length;
+      const today = allMessages.filter(m => new Date(m.date).toDateString() === new Date().toDateString()).length;
+      document.getElementById('statTotal').textContent = allMessages.length;
+      document.getElementById('statUnread').textContent = unread;
+      document.getElementById('statRead').textContent = allMessages.length - unread;
+      document.getElementById('statToday').textContent = today;
+      document.getElementById('unreadBadge').textContent = unread + ' unread';
+    }
+
+    function setFilter(f, btn) {
+      currentFilter = f;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderMessages();
+    }
+
+    function renderMessages() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      let msgs = allMessages.filter(m => {
+        if (currentFilter === 'unread') return !m.read;
+        if (currentFilter === 'read') return m.read;
+        return true;
+      }).filter(m =>
+        m.name.toLowerCase().includes(search) ||
+        m.email.toLowerCase().includes(search) ||
+        m.subject.toLowerCase().includes(search) ||
+        m.message.toLowerCase().includes(search)
+      );
+
+      const list = document.getElementById('messagesList');
+      if (msgs.length === 0) {
+        list.innerHTML = `<div class="empty-state"><div class="icon">📭</div>No messages found</div>`;
+        return;
+      }
+      list.innerHTML = msgs.map(m => `
+        <div class="msg-row ${!m.read ? 'unread' : ''}" onclick="openModal('${m.id}')">
+          <div class="msg-name">
+            ${!m.read ? '<span class="unread-dot"></span>' : ''}
+            ${escHtml(m.name)}
+          </div>
+          <div class="msg-email">${escHtml(m.email)}</div>
+          <div class="msg-subject">${escHtml(m.subject)}</div>
+          <div class="msg-date">${formatDate(m.date)}</div>
+          <div class="msg-actions" onclick="event.stopPropagation()">
+            ${!m.read ? `<button class="btn-icon read" title="Mark as read" onclick="markRead('${m.id}')">✓</button>` : ''}
+            <button class="btn-icon" title="Delete" onclick="deleteMsg('${m.id}')">🗑</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openModal(id) {
+      const m = allMessages.find(x => x.id === id);
+      if (!m) return;
+      currentModalId = id;
+      document.getElementById('modalSubject').textContent = m.subject;
+      document.getElementById('modalName').textContent = m.name;
+      document.getElementById('modalEmail').textContent = m.email;
+      document.getElementById('modalDate').textContent = new Date(m.date).toLocaleString();
+      document.getElementById('modalMessage').textContent = m.message;
+      document.getElementById('modalOverlay').classList.add('open');
+      if (!m.read) markRead(id, true);
+    }
+
+    function closeModal(e) {
+      if (e && e.target !== document.getElementById('modalOverlay')) return;
+      document.getElementById('modalOverlay').classList.remove('open');
+      currentModalId = null;
+    }
+
+    async function markRead(id, silent = false) {
+      await fetch(`/api/messages/${id}/read`, { method: 'PATCH' });
+      const m = allMessages.find(x => x.id === id);
+      if (m) m.read = true;
+      updateStats(); renderMessages();
+      if (!silent) showToast('✓ Marked as read', 'success');
+    }
+
+    async function deleteMsg(id) {
+      if (!confirm('Delete this message?')) return;
+      await fetch(`/api/messages/${id}`, { method: 'DELETE' });
+      allMessages = allMessages.filter(m => m.id !== id);
+      updateStats(); renderMessages();
+      showToast('🗑 Message deleted', 'success');
+    }
+
+    async function deleteFromModal() {
+      if (currentModalId) {
+        document.getElementById('modalOverlay').classList.remove('open');
+        await deleteMsg(currentModalId);
+        currentModalId = null;
+      }
+    }
+
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.className = `toast ${type} show`;
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    function escHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function formatDate(iso) {
+      const d = new Date(iso);
+      const now = new Date();
+      const diff = now - d;
+      if (diff < 60000) return 'Just now';
+      if (diff < 3600000) return Math.floor(diff/60000) + 'm ago';
+      if (diff < 86400000) return Math.floor(diff/3600000) + 'h ago';
+      return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    }
+
+    loadMessages();
+    // Auto-refresh every 30s
+    setInterval(loadMessages, 30000);
+  </script>
+</body>
+</html>
