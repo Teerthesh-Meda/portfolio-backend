@@ -48,12 +48,15 @@ function requireLogin(req, res, next) {
 
 // ─── Email Transporter (Gmail) ────────────────────────────
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.EMAIL_USER || 'your@gmail.com',
     pass: process.env.EMAIL_PASS || 'your-app-password'
   }
 });
+
 
 // ══════════════════════════════════════════════════════════
 //  API ROUTES
